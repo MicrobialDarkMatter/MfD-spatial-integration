@@ -1,0 +1,267 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix ns0: <http://purl.org/vocab/vann/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix cc: <http://creativecommons.org/ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix schema: <http://schema.org/> .
+@prefix mfd: <https://purl.archive.org/purl/mfd/ontology#> .
+
+##############################################
+
+# Metadata
+
+##############################################
+
+<https://purl.archive.org/purl/mfd/ontology>
+  a owl:Ontology ;
+  dc:title "The Microflora Danica ontology"@en ;
+  dc:description "The Microflora Danica ontology provides context to concepts and entities found in the Microflora Danica Dataset"@en ;
+  ns0:preferredNamespacePrefix "mfd" ;
+  ns0:preferredNamespaceUri "https://purl.archive.org/purl/mfd/ontology#" ;
+  owl:versionInfo "Version 0.1 - 2024-04-10"@en ;
+  dc:modified "2024-04-10"^^xsd:date ;
+  dc:contributor "Mads Corfixen", "Thomas Heede" ;
+  cc:license <https://mit-license.org> .
+
+##############################################
+
+# Class definitions
+
+##############################################
+
+mfd:Sample
+  a owl:Class ;
+  rdfs:label "Sample"@en ;
+  rdfs:comment "A sample is field sample of a microbial community."@en .
+
+mfd:Site
+  a owl:Class ;
+  rdfs:label "Site"@en ;
+  rdfs:comment "A site is a location where a sample was taken."@en .
+
+mfd:Habitat
+  a owl:Class ;
+  rdfs:label "Habitat"@en ;
+  rdfs:comment "A habitat is describing the environment of a <Sample>."@en .
+
+mfd:Sequence
+  a owl:Class ;
+  rdfs:label "Sequence"@en ;
+  rdfs:comment "A sequence is a DNA sequence and pertaining metadata."@en .
+
+mfd:RasterFile
+  a owl:Class ;
+  rdfs:label "RasterFile"@en ;
+  rdfs:comment "A raster file is a file containing raster data."@en .
+
+mfd:RasterCell
+  a owl:Class ;
+  rdfs:label "RasterCell"@en ;
+  rdfs:comment "A raster cell is a cell in a raster file."@en .
+
+mfd:Cell10km
+  a owl:Class ;
+  rdfs:label "Cell10km"@en ;
+  rdfs:comment "A 10km cell is a cell in a 10km grid."@en .
+
+mfd:Cell1km
+  a owl:Class ;
+  rdfs:label "Cell1km"@en ;
+  rdfs:comment "A 1km cell is a cell in a 1km grid."@en .
+
+mfd:SampleType
+  a owl:Class ;
+  rdfs:label "SampleType"@en ;
+  rdfs:comment "A sample type is a type of the habitat."@en .
+
+mfd:AreaType
+  a owl:Class ;
+  rdfs:label "AreaType"@en ;
+  rdfs:comment "An area type is a type of habitat."@en .
+
+mfd:HabitatCode
+  a owl:Class ;
+  rdfs:label "HabitatCode"@en ;
+  rdfs:comment "A habitat code is a code for a habitat."@en .
+
+mfd:Natura2000Concept
+  a owl:Class ;
+  rdfs:label "Natura2000Concept"@en ;
+  rdfs:comment "A Natura 2000 concept is a concept from the Natura 2000 classification."@en .
+
+mfd:EUNISConcept
+  a owl:Class ;
+  rdfs:label "EUNISConcept"@en ;
+  rdfs:comment "An EUNIS concept is a concept from the EUNIS classification."@en .
+
+mfd:OTU
+  a owl:Class ;
+  rdfs:label "OTU"@en ;
+  rdfs:comment "An operational taxonomic unit (OTU) is a unit of classification in microbial ecology."@en .
+
+mfd:ExtractionID
+  a owl:Class ;
+  rdfs:label "ExtractionID"@en ;
+  rdfs:comment "An extraction ID is an identifier for a DNA extraction."@en .
+
+mfd:ExtractionPlateID
+  a owl:Class ;
+  rdfs:label "ExtractionPlateID"@en ;
+  rdfs:comment "An extraction plate ID is an identifier for a DNA extraction plate."@en .
+
+mfd:LibraryID
+  a owl:Class ;
+  rdfs:label "LibraryID"@en ;
+  rdfs:comment "A library ID is an identifier for a DNA library."@en .
+
+mfd:LibraryPlateID
+  a owl:Class ;
+  rdfs:label "LibraryPlateID"@en ;
+  rdfs:comment "A library plate ID is an identifier for a DNA library plate."@en .
+
+mfd:Read
+  a owl:Class ;
+  rdfs:label "Read"@en ;
+  rdfs:comment "A read is an identifier for a DNA read file."@en .
+
+##############################################
+
+# Property definitions
+
+##############################################
+
+mfd:relatedProject
+  a owl:ObjectProperty ;
+  rdfs:label "relatedProject"@en ;
+  rdfs:comment "A project that the sample is related to."@en ;
+  rdfs:domain mfd:Sample ;
+  rdfs:range schema:Project .
+
+mfd:hasHabitat
+  a owl:ObjectProperty ;
+  rdfs:label "hasHabitat"@en ;
+  rdfs:comment "The habitat of the sample."@en ;
+  rdfs:domain mfd:Sample ;
+  rdfs:range mfd:Habitat .
+
+mfd:hasReliableCoordinate
+  a owl:DatatypeProperty ;
+  rdfs:label "hasReliableCoordinates"@en ;
+  rdfs:comment "The sample has reliable coordinates."@en ;
+  rdfs:domain mfd:Site ;
+  rdfs:range xsd:String .
+
+mfd:in1kmCell
+  a owl:ObjectProperty ;
+  rdfs:label "in1kmCell"@en ;
+  rdfs:comment "The site is in a 1km cell."@en ;
+  rdfs:domain mfd:Site ;
+  rdfs:range mfd:Cell1km .
+
+mfd:in10kmCell
+  a owl:ObjectProperty ;
+  rdfs:label "in10kmCell"@en ;
+  rdfs:comment "The site is in a 10km cell."@en ;
+  rdfs:domain mfd:Site ;
+  rdfs:range mfd:Cell10km .
+
+mfd:hasSampleType
+  a owl:ObjectProperty ;
+  rdfs:label "hasSampleType"@en ;
+  rdfs:comment "The sample has a sample type."@en ;
+  rdfs:domain mfd:Habitat ;
+  rdfs:range mfd:SampleType .
+
+mfd:hasAreaType
+  a owl:ObjectProperty ;
+  rdfs:label "hasAreaType"@en ;
+  rdfs:comment "The sample has an area type."@en ;
+  rdfs:domain mfd:Habitat ;
+  rdfs:range mfd:AreaType .
+
+mfd:hasHabitat1Code
+  a owl:ObjectProperty ;
+  rdfs:label "hasHabitatCode"@en ;
+  rdfs:comment "The sample has a habitat code."@en ;
+  rdfs:domain mfd:Habitat ;
+  rdfs:range mfd:HabitatCode .
+
+mfd:hasHabitat2Code
+  a owl:ObjectProperty ;
+  rdfs:label "hasHabitatCode"@en ;
+  rdfs:comment "The sample has a habitat code."@en ;
+  rdfs:domain mfd:Habitat ;
+  rdfs:range mfd:HabitatCode .
+
+mfd:hasHabitat3Code
+  a owl:ObjectProperty ;
+  rdfs:label "hasHabitatCode"@en ;
+  rdfs:comment "The sample has a habitat code."@en ;
+  rdfs:domain mfd:Habitat ;
+  rdfs:range mfd:HabitatCode .
+
+mfd:hasExtractionRow
+  a owl:ObjectProperty ;
+  rdfs:label "hasExtractionRow"@en ;
+  rdfs:comment "The sample has an extraction row."@en ;
+  rdfs:domain mfd:Sequence ;
+  rdfs:range xsd:String .
+
+mfd:hasExtractionCol
+  a owl:ObjectProperty ;
+  rdfs:label "hasExtractionCol"@en ;
+  rdfs:comment "The sample has an extraction column."@en ;
+  rdfs:domain mfd:Sequence ;
+  rdfs:range xsd:String .
+
+mfd:hasExtractionConc
+  a owl:ObjectProperty ;
+  rdfs:label "hasExtractionConc"@en ;
+  rdfs:comment "The sample has an extraction concentration."@en ;
+  rdfs:domain mfd:Sequence ;
+  rdfs:range xsd:float .
+
+mfd:hasExtractionMethod
+  a owl:ObjectProperty ;
+  rdfs:label "hasExtractionMethod"@en ;
+  rdfs:comment "The sample has an extraction method."@en ;
+  rdfs:domain mfd:Sequence ;
+  rdfs:range xsd:String .
+
+mfd:hasLibraryRow
+  a owl:ObjectProperty ;
+  rdfs:label "hasLibraryRow"@en ;
+  rdfs:comment "The sample has a library row."@en ;
+  rdfs:domain mfd:Sequence ;
+  rdfs:range xsd:String .
+
+mfd:hasLibraryConc
+  a owl:ObjectProperty ;
+  rdfs:label "hasLibraryConc"@en ;
+  rdfs:comment "The sample has a library concentration."@en ;
+  rdfs:domain mfd:Sequence ;
+  rdfs:range xsd:float .
+
+mfd:hasLibraryMethod
+  a owl:ObjectProperty ;
+  rdfs:label "hasLibraryMethod"@en ;
+  rdfs:comment "The sample has a library method."@en ;
+  rdfs:domain mfd:Sequence ;
+  rdfs:range xsd:String .
+
+mfd:hasRead
+  a owl:ObjectProperty ;
+  rdfs:label "hasRead"@en ;
+  rdfs:comment "The sample has a read."@en ;
+  rdfs:domain mfd:Sequence ;
+  rdfs:range mfd:Read .
+
+mfd:responsible
+  a owl:ObjectProperty ;
+  rdfs:label "responsible"@en ;
+  rdfs:comment "The person responsible for the project."@en ;
+  rdfs:domain schema:Project ;
+  rdfs:range schema:Person .
