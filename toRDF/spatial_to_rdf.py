@@ -5,10 +5,11 @@ import os
 from rdflib import Graph, URIRef, Literal, BNode
 # from rdflib.namespace import RDF, XSD
 
-from variables import RDF, XSD, MFD, OBOE, GEO, KWG_ONT
+from variables import RDF, RDFS, XSD, MFD, OBOE, GEO, KWG_ONT
 
 import gzip
 import pyarrow.parquet as pq
+
 
 # from rdflib import Namespace
 
@@ -85,10 +86,14 @@ def raster_values_to_rdf(parquet_folder, save_file):
             file_name = file.removesuffix(".parquet")
             file_observation = file_name.split(".")[0]
 
-            # RasterFile type ObservationCollection
+            # RasterFile subclassof ObservationCollection
+            G.add(triple=(URIRef(MFD + file_name),
+                          URIRef(RDFS.subClassOf),
+                          URIRef(OBOE + "ObservationCollection")))
+
             G.add(triple=(URIRef(MFD + file_name),
                           URIRef(RDF.type),
-                          URIRef(OBOE + "ObservationCollection")))
+                          URIRef(MFD + "RasterFile")))
 
             for r in df.iter_rows():  # for row in dataframe - r[0] value of row in column 1, r[1] value of row in column 2, etc.
                 measurement = BNode()
@@ -100,15 +105,18 @@ def raster_values_to_rdf(parquet_folder, save_file):
                               URIRef(OBOE + "hasMember"),
                               URIRef(MFD + raster_cell)))
 
-                # RasterFile rdf:type oboe:ObservationCollection
-                G.add(triple=(URIRef(MFD + file_name),
-                              URIRef(RDF.type),
-                              URIRef(OBOE + "ObservationCollection")))
-
                 # RasterCell hasMeasurement Measurement
                 G.add(triple=(URIRef(MFD + raster_cell),
                               URIRef(OBOE + "hasMeasurement"),
                               URIRef(measurement)))
+
+                G.add(triple=(URIRef(MFD + raster_cell),
+                              URIRef(RDF.type),
+                              URIRef(MFD + "RasterCell")))
+
+                G.add(triple=(URIRef(MFD + raster_cell),
+                              URIRef(RDFS.subClassOf),
+                              URIRef(OBOE + "Observation")))
 
                 # Measurement hasValue literal
                 lit, lit_type = get_literal(r[8])
@@ -147,11 +155,6 @@ def raster_mappings_to_rdf(parquet_datasets_path_or_folder, save_file):
             raster_cell = get_raster_cell_id(list(r[1]))
 
             for s2_cell in s2_cells:
-                # RasterCell rdf:type oboe:Observation
-                G.add(triple=(URIRef(MFD + raster_cell),
-                              URIRef(RDF.type),
-                              URIRef(OBOE + "Observation")))
-
                 # S2Cell Type KWG:S2Cell
                 G.add(triple=(URIRef(KWG_ONT + s2_cell),
                               URIRef(RDF.type),
