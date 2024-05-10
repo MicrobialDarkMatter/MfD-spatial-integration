@@ -169,8 +169,8 @@ def raster_mappings_to_rdf(parquet_datasets_path_or_folder, save_file):
 
 
 if __name__ == "__main__":
-    raster_values_to_rdf(parquet_folder="../example/output/raster_corners/",
-                         save_file="../example/output/raster_values.nt.gz")
+    raster_values_to_rdf(parquet_folder="/projects/mdm/teaserMappings/raster_cells/",
+                         save_file="raster_values.nt.gz")
 
-    raster_mappings_to_rdf(parquet_datasets_path_or_folder="../example/output/raster_s2_mappings.parquet",
-                           save_file="../example/output/raster_s2_mappings.nt.gz")
+    raster_mappings_to_rdf(parquet_datasets_path_or_folder="/projects/mdm/teaserMappings/corner_mappings/",
+                           save_file="raster_s2_mappings.nt.gz")
