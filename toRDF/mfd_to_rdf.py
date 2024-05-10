@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/projects/mdm/MfD-spatial-integration/")
+
 from rdflib import Graph, URIRef, Literal, BNode
 from rdflib.namespace import RDF, XSD, RDFS
 from babelgrid import Babel
@@ -5,7 +8,7 @@ import gzip
 import re
 
 from variables import *
-from toRDF.spatial_to_rdf import convert_s2_id_to_bit_id
+from spatial_to_rdf import convert_s2_id_to_bit_id
 
 
 RESOLUTION = 24  # TODO: Fix resolution if it changes
@@ -437,11 +440,11 @@ def iterative_add_habitat(row, id_mappings, habitat_level):
                                 URIRef(RDF.type),
                                 URIRef(MFD + "EUNISConcept")))
 
-            if not_nan(row["EMPO"]):  # TODO: Check if EMPO should be used
+            if not_nan(row["EMPO"]):
                 empo_1_2_3 = row["EMPO"].split(";")
                 G.add(triple=(URIRef(MFD + habitat_id),
                               URIRef(MFD + f"hasEMPO{i}Concept"),
-                              URIRef(MFD + empo_1_2_3[i - 1].replace(" ", ""))))
+                              URIRef(MFD + empo_1_2_3[i - 1].replace(" ", ""))))  # TODO: Check if EMPO should be used
 
                 # type
                 G.add(triple=(URIRef(MFD + empo_1_2_3[i - 1].replace(" ", "")),
@@ -495,6 +498,12 @@ def ontology_row_to_graph(row, id_mappings):
 def row_otu_to_rdf(row):
     G = Graph()
 
+    # print(row)
+    # print(" ROW INDEX ")
+    # print(list(row.index))
+    # print(" ROW INDEX SLICE ")
+    # print((row.index[1:-7]))
+
     # OTU and samples
     for sample in row.index[1:-7]:
         measurement_bnode = BNode()
@@ -536,6 +545,14 @@ def row_otu_to_rdf(row):
     return G
 
 
+def save_otu_graph(otu, save_buffer):
+    with gzip.open(filename=save_buffer, mode="at", encoding="utf-8") as triple_file:
+        for i in range(otu.shape[0]):
+            graph = row_otu_to_rdf(otu.iloc[i])
+
+            triple_file.write(graph.serialize(format='nt'))
+
+
 if __name__ == "__main__":
     # # # # Microflora Danica data # # # #
     import pandas as pd
@@ -548,7 +565,7 @@ if __name__ == "__main__":
     coord_trans = CoordinateTransformer()
     
     # TODO: Fix path
-    with rasterio.open("/Users/cp68wp/Downloads/teaser_data/amplitude_mean/amplitude_mean.vrt") as src:
+    with rasterio.open("/projects/mdm/MfD-spatial-integration/example/data/solar_radiation.vrt") as src:
         transform = src.transform
 
         ul = coord_trans.transform_coordinates(transform * (0, 0))
@@ -598,16 +615,18 @@ if __name__ == "__main__":
     field_row_to_graph = partial(field_row_to_graph, id_mappings=id_mappings)
 
     # OTU data
-    otu_path = "/Users/cp68wp/Documents/GitHub/OTU/Data/2023-11-07_arcbac_MFD_samples_phylotabel_release.csv"
-    otu = pd.read_csv(otu_path)
+    otu_path = "/projects/microflora_danica/sub_projects/phylotables/analysis/release/2024-03-07_arcbac_MFD_samples_phylotabel_release.csv"
+    otu_df = pd.read_csv(otu_path)
     fieldsamples = field_metadata["fieldsample_barcode"].unique()
-    cols_to_drop = [col for col in otu.columns if col not in fieldsamples and "MFD" in col]
-    otu = otu.drop(columns=cols_to_drop)
-    print(otu.columns)
+    cols_to_drop = [col for col in otu_df.columns if col not in fieldsamples and "MFD" in col]
+    otu_df = otu_df.drop(columns=cols_to_drop)
+    print(otu_df.columns)
+    print(type(otu_df))
 
     # # # # Convert the data to RDF # # # #
     save_graph(save_buffer="SUBSET_field_metadata.nt.gz",
                graph=row_graphs_to_graph(field_metadata, field_row_to_graph))
+    print("Saved Field")
     
     save_graph(save_buffer="SUBSET_seq_metadata.nt.gz",
                graph=row_graphs_to_graph(seq_metadata, seq_row_to_graph))
@@ -618,5 +637,4 @@ if __name__ == "__main__":
     save_graph(save_buffer="SUBSET_habitat.nt.gz",
                graph=row_graphs_to_graph(mfdo, ontology_row_to_graph))
 
-    save_graph(save_buffer="SUBSET_otu.nt.gz",
-               graph=row_graphs_to_graph(otu, row_otu_to_rdf))
+    save_otu_graph(otu=otu_df, save_buffer="SUBSET_otu.nt.gz")
