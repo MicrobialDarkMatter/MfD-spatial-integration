@@ -47,7 +47,7 @@ if __name__ == "__main__":
     PREFIX oboe: <http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#>
     PREFIX empo: <http://earthmicrobiome.org/protocols-and-standards/empo/>
     PREFIX schema: <http://schema.org/>
-    PREFIX geo: <http://www.opengis.net/ont/geosparql>
+    PREFIX geo: <http://www.opengis.net/ont/geosparql#>
     PREFIX wgs84_pos: <http://www.w3.org/2003/01/geo/wgs84_pos#>
     PREFIX time: <http://www.w3.org/2006/time#>
     PREFIX prov: <http://www.w3.org/ns/prov#>
