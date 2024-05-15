@@ -23,11 +23,3 @@ function getS2BinaryID(latitude, longitude, level) {
     // Convert the decimal ID to a 64-bit binary string
     return decimalID.toString(2).padStart(64, '0');
 }
-
-// Example usage
-const latitude = 56.292858;
-const longitude = 8.173521;
-const level = 24;
-const binaryID = getS2BinaryID(latitude, longitude, level);
-
-console.log(binaryID);

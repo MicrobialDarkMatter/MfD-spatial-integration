@@ -1,9 +1,12 @@
 const nodes2ts = require('nodes2ts');
 
-// The function must take as input an S2 cell and a distance (which will not be used), and a desired level (which will approximate the distance). The output will be the S2 cell's parent at the specified level
-// When used to query, we will apply this function to all S2 cells that contains a sample, and return only those with the same parent as the original input S2 cell.
-
-function getParentCell(inputCell, distance, level) {
+/**
+ * Returns the parent S2 cell ID of a specified S2 cell ID at a given level.
+ * @param {string} inputCell - The S2 cell ID.
+ * @param {number} level - The S2 level of the parent cell.
+ * @returns {string} The parent S2 cell ID.
+ */
+function getParentCell(inputCell, level) {
     if (level < 0 || level > 30 || !Number.isInteger(level)){
         throw new Error("The S2 level must be an integer value in the range [0, 30].");
     }
