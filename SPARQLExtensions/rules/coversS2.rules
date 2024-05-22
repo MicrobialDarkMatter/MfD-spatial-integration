@@ -8,7 +8,7 @@ Prefices
 
 Rules:
 Id: geoCoversInfersS2Cell
-    ?x geo:covers ?y
-    ?x rdf:type mfd:rasterCell
+    x <geo:covers> y
+    x <rdf:type> <mfd:rasterCell>
     -------------------------------
-    ?y rdf:type kwg-ont:S2Cell
+    y <rdf:type> <kwg-ont:S2Cell>
