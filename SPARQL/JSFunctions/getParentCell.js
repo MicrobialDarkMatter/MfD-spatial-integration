@@ -26,7 +26,6 @@ function getParentCell(inputCell, level) {
 // Example usage
 const input = "0100011001001010001111111000101001100100101010000101000000000000";
 const goal = "0100011001001010001111110000000000000000000000000000000000000000"
-const distance = 8000; // in meters
 const level = 10;
-const parentCell = getParentCell(input, distance, level);
+const parentCell = getParentCell(input, level);
 console.log(parentCell == goal);
