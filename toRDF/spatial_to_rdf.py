@@ -1,5 +1,6 @@
 import numpy as np
 import polars as pl
+import re
 
 import os
 from rdflib import Graph, URIRef, Literal, BNode
@@ -10,9 +11,10 @@ from variables import RDF, RDFS, XSD, MFD, OBOE, GEO, KWG_ONT
 import gzip
 import pyarrow.parquet as pq
 
+from ABox import create_abox
 
-# from rdflib import Namespace
 
+remove_suffix_numbering = lambda x: re.sub(r'[_\d]+$', "", x)
 
 def convert_s2_id_to_bit_id(s2_hex):
     """
@@ -43,7 +45,7 @@ def get_raster_cell_id(r):
     Returns:
         str: The raster cell ID.
     """
-    return f"{r[0]}_{r[1]}_{r[2]}_{r[3]}_{r[4]}_{r[5]}_{r[6]}_{r[7]}"
+    return f"{int(r[0])}_{int(r[1])}_{int(r[2])}_{int(r[3])}_{int(r[4])}_{int(r[5])}_{int(r[6])}_{int(r[7])}"
 
 
 def get_literal(literal):
@@ -84,21 +86,19 @@ def raster_values_to_rdf(parquet_folder, save_file):
             G = Graph()  # Initialize an empty graph
 
             file_name = file.removesuffix(".parquet")
-            file_observation = file_name.split(".")[0]
 
-            # RasterFile subclassof ObservationCollection
-            G.add(triple=(URIRef(MFD + file_name),
-                          URIRef(RDFS.subClassOf),
-                          URIRef(OBOE + "ObservationCollection")))
+            file_observation = file_name.split(".")[0]
+            file_observation = remove_suffix_numbering(file_observation)
 
             G.add(triple=(URIRef(MFD + file_name),
                           URIRef(RDF.type),
                           URIRef(MFD + "RasterFile")))
 
             for r in df.iter_rows():  # for row in dataframe - r[0] value of row in column 1, r[1] value of row in column 2, etc.
-                measurement = BNode()
-
                 raster_cell = get_raster_cell_id(r)
+
+                # measurement = BNode()
+                measurement = URIRef(MFD + file_name + "_" + raster_cell)
 
                 # RasterFile hasMember RasterCell
                 G.add(triple=(URIRef(MFD + file_name),
@@ -108,29 +108,25 @@ def raster_values_to_rdf(parquet_folder, save_file):
                 # RasterCell hasMeasurement Measurement
                 G.add(triple=(URIRef(MFD + raster_cell),
                               URIRef(OBOE + "hasMeasurement"),
-                              URIRef(measurement)))
+                              measurement))
 
                 G.add(triple=(URIRef(MFD + raster_cell),
                               URIRef(RDF.type),
                               URIRef(MFD + "RasterCell")))
 
-                G.add(triple=(URIRef(MFD + raster_cell),
-                              URIRef(RDFS.subClassOf),
-                              URIRef(OBOE + "Observation")))
-
                 # Measurement hasValue literal
                 lit, lit_type = get_literal(r[8])
-                G.add(triple=(URIRef(measurement),
+                G.add(triple=(measurement,
                               URIRef(OBOE + "hasValue"),
                               Literal(lit, datatype=lit_type)))
 
                 # Measurement Type Measurement
-                G.add(triple=(URIRef(measurement),
+                G.add(triple=(measurement,
                               URIRef(RDF.type),
                               URIRef(OBOE + "Measurement")))
 
                 # Measurement ContainsMeasurementsOfType MeasurementType
-                G.add(triple=(URIRef(measurement),
+                G.add(triple=(measurement,
                               URIRef(OBOE + "containsMeasurementsOfType"),
                               URIRef(MFD + file_observation)))
 
@@ -155,10 +151,11 @@ def raster_mappings_to_rdf(parquet_datasets_path_or_folder, save_file):
             raster_cell = get_raster_cell_id(list(r[1]))
 
             for s2_cell in s2_cells:
-                # S2Cell Type KWG:S2Cell
-                G.add(triple=(URIRef(KWG_ONT + s2_cell),
-                              URIRef(RDF.type),
-                              URIRef(KWG_ONT + "S2Cell")))
+                # TODO: Add to TBOX
+                # # S2Cell Type KWG:S2Cell
+                # G.add(triple=(URIRef(KWG_ONT + s2_cell),
+                #               URIRef(RDF.type),
+                #               URIRef(KWG_ONT + "S2Cell")))
 
                 # RasterCell Covers S2Cell
                 G.add(triple=(URIRef(MFD + raster_cell),
@@ -169,8 +166,10 @@ def raster_mappings_to_rdf(parquet_datasets_path_or_folder, save_file):
 
 
 if __name__ == "__main__":
-    raster_values_to_rdf(parquet_folder="/projects/mdm/teaserMappings/raster_cells/",
+    create_abox(save_file="abox.nt.gz")
+
+    raster_values_to_rdf(parquet_folder="/projects/mdm/S2Mappings/raster_cells/",
                          save_file="raster_values.nt.gz")
 
-    raster_mappings_to_rdf(parquet_datasets_path_or_folder="/projects/mdm/teaserMappings/corner_mappings/",
+    raster_mappings_to_rdf(parquet_datasets_path_or_folder="/projects/mdm/S2Mappings/corner_mappings/",
                            save_file="raster_s2_mappings.nt.gz")
