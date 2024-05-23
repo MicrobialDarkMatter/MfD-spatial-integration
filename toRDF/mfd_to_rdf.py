@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/projects/mdm/MfD-spatial-integration/")
+
 from rdflib import Graph, URIRef, Literal, BNode
 from rdflib.namespace import RDF, XSD, RDFS
 from babelgrid import Babel
@@ -5,7 +8,10 @@ import gzip
 import re
 
 from variables import *
-from toRDF.spatial_to_rdf import convert_s2_id_to_bit_id
+from spatial_to_rdf import convert_s2_id_to_bit_id
+
+
+from S2Integration.misc.LogFile import LogFile
 
 
 RESOLUTION = 24  # TODO: Fix resolution if it changes
@@ -63,12 +69,15 @@ def get_id_mappings(mfdo):
 
         if parent != parent:  # If entry is NaN, continue
             continue
+        parent = parent.strip()  # Misalignment with spaces
         hierarchy.setdefault(parent, {})
         if child != child:  # If entry is NaN, continue
             continue
+        child = child.strip()
         hierarchy[parent].setdefault(child, [])
         if root != root:  # If entry is NaN, continue
             continue
+        root = root.strip()
         hierarchy[parent][child].append(root)
 
     id_mappings = {}
@@ -221,10 +230,6 @@ def field_row_to_graph(row, id_mappings=None):
         G.add(triple=(URIRef(MFD + row["fieldsample_barcode"]),
                       URIRef(WGS84_POS + "location"),
                       row["site_bnode"]))
-        # subclassof
-        G.add(triple=(row["site_bnode"],
-                      URIRef(RDFS.subClassOf),
-                      URIRef(WGS84_POS + "Point")))
         # type
         G.add(triple=(row["site_bnode"],
                       URIRef(RDF.type),
@@ -235,15 +240,15 @@ def field_row_to_graph(row, id_mappings=None):
             if not_nan(row["mfd_hab3"]):
                 G.add(triple=(row["site_bnode"],
                               URIRef(MFD + "hasHabitat"),
-                              URIRef(MFD + id_mappings[row["mfd_hab3"]])))
+                              URIRef(MFD + id_mappings[row["mfd_hab3"].strip()])))
             elif not_nan(row["mfd_hab2"]):
                 G.add(triple=(row["site_bnode"],
                               URIRef(MFD + "hasHabitat"),
-                              URIRef(MFD + id_mappings[row["mfd_hab2"]])))
+                              URIRef(MFD + id_mappings[row["mfd_hab2"].strip()])))
             elif not_nan(row["mfd_hab1"]):
                 G.add(triple=(row["site_bnode"],
                               URIRef(MFD + "hasHabitat"),
-                              URIRef(MFD + id_mappings[row["mfd_hab1"]])))
+                              URIRef(MFD + id_mappings[row["mfd_hab1"].strip()])))
             else:
                 pass  # NO HABITAT INFORMATION
 
@@ -402,8 +407,8 @@ def iterative_add_habitat(row, id_mappings, habitat_level):
 
     for i in reversed(range(1, habitat_level + 1)):
         if not_nan(row[f"mfd_hab{i}"]):
-            habitat_id = id_mappings[row[f"mfd_hab{i}"]]
-            habitat = str(row[f"mfd_hab{i}"])
+            habitat_id = id_mappings[row[f"mfd_hab{i}"].strip()]
+            habitat = str(row[f"mfd_hab{i}"].strip())
 
             G.add(triple=(URIRef(MFD + habitat_id),
                           URIRef(RDFS.label),
@@ -412,10 +417,6 @@ def iterative_add_habitat(row, id_mappings, habitat_level):
             G.add(triple=(URIRef(MFD + habitat_id),
                           URIRef(RDF.type),
                           URIRef(MFD + f"Habitat{i}")))
-
-            G.add(triple=(URIRef(MFD + f"Habitat{i}"),
-                          URIRef(RDFS + "subClassOf"),
-                          URIRef(SKOS + "Concept")))
 
             if not_nan(row["Natura2000"]) and habitat_level == i:
                 G.add(triple=(URIRef(MFD + habitat_id),
@@ -437,11 +438,11 @@ def iterative_add_habitat(row, id_mappings, habitat_level):
                                 URIRef(RDF.type),
                                 URIRef(MFD + "EUNISConcept")))
 
-            if not_nan(row["EMPO"]):  # TODO: Check if EMPO should be used
+            if not_nan(row["EMPO"]):
                 empo_1_2_3 = row["EMPO"].split(";")
                 G.add(triple=(URIRef(MFD + habitat_id),
                               URIRef(MFD + f"hasEMPO{i}Concept"),
-                              URIRef(MFD + empo_1_2_3[i - 1].replace(" ", ""))))
+                              URIRef(MFD + empo_1_2_3[i - 1].replace(" ", ""))))  # TODO: Check if EMPO should be used
 
                 # type
                 G.add(triple=(URIRef(MFD + empo_1_2_3[i - 1].replace(" ", "")),
@@ -452,6 +453,7 @@ def iterative_add_habitat(row, id_mappings, habitat_level):
                 G.add(triple=(URIRef(MFD + habitat_id),
                               URIRef(SKOS + "broadMatch"),
                               URIRef(MFD + id_mappings[row[f"mfd_hab{i - 1}"]])))
+                #
             else:
                 G.add(triple=(URIRef(MFD + habitat_id),
                               URIRef(MFD + "hasAreaType"),
@@ -495,8 +497,17 @@ def ontology_row_to_graph(row, id_mappings):
 def row_otu_to_rdf(row):
     G = Graph()
 
+    # print(row)
+    # print(" ROW INDEX ")
+    # print(list(row.index))
+    # print(" ROW INDEX SLICE ")
+    # print((row.index[1:-7]))
+
     # OTU and samples
     for sample in row.index[1:-7]:
+        if row[sample] == 0:  # Don't add OTUs of no abundance
+            continue
+
         measurement_bnode = BNode()
         G.add(triple=(URIRef(MFD + sample),
                       URIRef(OBOE + "hasMeasurement"),
@@ -511,7 +522,7 @@ def row_otu_to_rdf(row):
                       Literal(row[sample], datatype=XSD.integer)))
 
         G.add(triple=(measurement_bnode,
-                      URIRef(OBOE + "containsMeasurementOfType"),
+                      URIRef(OBOE + "containsMeasurementsOfType"),
                       URIRef(MFD + row["OTU"])))
 
     # OTU and species
@@ -536,23 +547,23 @@ def row_otu_to_rdf(row):
     return G
 
 
+def save_otu_graph(otu, save_buffer):
+    log = LogFile(log_file="otu.txt")
+    with gzip.open(filename=save_buffer, mode="at", encoding="utf-8") as triple_file:
+        for i in range(otu.shape[0]):
+            graph = row_otu_to_rdf(otu.iloc[i])
+
+            triple_file.write(graph.serialize(format='nt'))
+
+            log.update_log_idx(log.get_log_idx() + 1)
+
+
 if __name__ == "__main__":
     # # # # Microflora Danica data # # # #
     import pandas as pd
     from io import BytesIO
     import requests
     import rasterio
-    
-    from S2Integration.misc.CoordinateTransformer import CoordinateTransformer
-
-    coord_trans = CoordinateTransformer()
-    
-    # TODO: Fix path
-    with rasterio.open("/Users/cp68wp/Downloads/teaser_data/amplitude_mean/amplitude_mean.vrt") as src:
-        transform = src.transform
-
-        ul = coord_trans.transform_coordinates(transform * (0, 0))
-        br = coord_trans.transform_coordinates(transform * (src.width, src.height))
 
     # Sample data
     field_metadata_dir = "https://github.com/cmc-aau/mfd_metadata/raw/main/analysis/releases/latest_mfd_db.xlsx"
@@ -562,22 +573,17 @@ if __name__ == "__main__":
     sites_df = field_metadata[["latitude", "longitude"]].drop_duplicates()  # adding b_nodes to sample sites
     sites_df["site_bnode"] = [BNode() for i in range(sites_df.shape[0])]
     field_metadata = field_metadata.merge(sites_df, on=["latitude", "longitude"], how="left")
-
-    field_metadata = field_metadata[ # Filtering by bounding box
-        (field_metadata["latitude"] <= ul[0]) & (field_metadata["latitude"] >= br[0]) &
-        (field_metadata["longitude"] >= ul[1]) & (field_metadata["longitude"] <= br[1])
-        ]
     
     # Sequence data
     seq_metadata_dir = "https://raw.githubusercontent.com/cmc-aau/mfd_metadata/main/data/metadata/general/latest_corrected_combined_metadata.csv"
     seq_metadata = pd.read_csv(seq_metadata_dir)
-    seq_metadata = seq_metadata[seq_metadata["fieldsample_barcode"].isin(field_metadata["fieldsample_barcode"])]
+    # seq_metadata = seq_metadata[seq_metadata["fieldsample_barcode"].isin(field_metadata["fieldsample_barcode"])]
     
     # Project data
     projects_dir = "https://github.com/cmc-aau/mfd_metadata/raw/main/analysis/releases/latest_mfd_projects.xlsx"
     projects_file = requests.get(projects_dir)
     projects = pd.read_excel(BytesIO(projects_file.content))
-    projects = projects[projects["project_id"].isin(field_metadata["project_id"])]
+    # projects = projects[projects["project_id"].isin(field_metadata["project_id"])]
 
     # Habitat
     from functools import partial
@@ -597,26 +603,26 @@ if __name__ == "__main__":
     field_metadata.merge(mfdo, on=["mfd_sampletype", "mfd_areatype", "mfd_hab1", "mfd_hab2", "mfd_hab3"], how="left")
     field_row_to_graph = partial(field_row_to_graph, id_mappings=id_mappings)
 
-    # OTU data
-    otu_path = "/Users/cp68wp/Documents/GitHub/OTU/Data/2023-11-07_arcbac_MFD_samples_phylotabel_release.csv"
-    otu = pd.read_csv(otu_path)
-    fieldsamples = field_metadata["fieldsample_barcode"].unique()
-    cols_to_drop = [col for col in otu.columns if col not in fieldsamples and "MFD" in col]
-    otu = otu.drop(columns=cols_to_drop)
-    print(otu.columns)
+
+
 
     # # # # Convert the data to RDF # # # #
-    save_graph(save_buffer="SUBSET_field_metadata.nt.gz",
+    save_graph(save_buffer="fieldsamples.nt.gz",
                graph=row_graphs_to_graph(field_metadata, field_row_to_graph))
     
-    save_graph(save_buffer="SUBSET_seq_metadata.nt.gz",
+    save_graph(save_buffer="sequencing.nt.gz",
                graph=row_graphs_to_graph(seq_metadata, seq_row_to_graph))
     
-    save_graph(save_buffer="SUBSET_projects.nt.gz",
+    save_graph(save_buffer="projects.nt.gz",
                graph=row_graphs_to_graph(projects, project_row_to_graph))
 
-    save_graph(save_buffer="SUBSET_habitat.nt.gz",
+    save_graph(save_buffer="habitat.nt.gz",
                graph=row_graphs_to_graph(mfdo, ontology_row_to_graph))
 
-    save_graph(save_buffer="SUBSET_otu.nt.gz",
-               graph=row_graphs_to_graph(otu, row_otu_to_rdf))
+    # # OTU data
+    # otu_path = "/projects/microflora_danica/sub_projects/phylotables/analysis/release/2024-03-07_arcbac_MFD_samples_phylotabel_release.csv"
+    # otu_df = pd.read_csv(otu_path)
+    # save_otu_graph(otu=otu_df, save_buffer="otu.nt.gz")
+    # fieldsamples = field_metadata["fieldsample_barcode"].unique()
+    # cols_to_drop = [col for col in otu_df.columns if col not in fieldsamples and "MFD" in col]
+    # otu_df = otu_df.drop(columns=cols_to_drop)

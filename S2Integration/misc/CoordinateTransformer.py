@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/projects/mdm/MfD-spatial-integration/")
+
 import pyproj
 
 
