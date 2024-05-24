@@ -10,7 +10,7 @@ This folder contains JavaScript functions used to extend the functionality of SP
 
 ## Rules
 This folder contains rules that were used to perform reasoning over the graph. The rules are:
-- *geoCoversInfersS2Cell.pie* If the two triples `?x geo:ehCovers ?y` and `?x rdf:type mfd:rasterCell` exist, infer
+- *geoCoversInfersS2Cell* If the two triples `?x geo:ehCovers ?y` and `?x rdf:type mfd:rasterCell` exist, infer
 `?y rdf:type kwg-ont:S2Cell`.
 
 ## Queries
