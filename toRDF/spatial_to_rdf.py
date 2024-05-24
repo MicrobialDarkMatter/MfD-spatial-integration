@@ -11,7 +11,7 @@ from variables import RDF, RDFS, XSD, MFD, OBOE, GEO, KWG_ONT
 import gzip
 import pyarrow.parquet as pq
 
-from ABox import create_abox
+from TBox import create_tbox
 
 
 remove_suffix_numbering = lambda x: re.sub(r'[_\d]+$', "", x)
@@ -166,7 +166,7 @@ def raster_mappings_to_rdf(parquet_datasets_path_or_folder, save_file):
 
 
 if __name__ == "__main__":
-    create_abox(save_file="abox.nt.gz")
+    create_tbox(save_file="abox.nt.gz")
 
     raster_values_to_rdf(parquet_folder="/projects/mdm/S2Mappings/raster_cells/",
                          save_file="raster_values.nt.gz")
