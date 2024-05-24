@@ -166,7 +166,7 @@ def raster_mappings_to_rdf(parquet_datasets_path_or_folder, save_file):
 
 
 if __name__ == "__main__":
-    create_tbox(save_file="abox.nt.gz")
+    create_tbox(save_file="tbox.nt.gz")
 
     raster_values_to_rdf(parquet_folder="/projects/mdm/S2Mappings/raster_cells/",
                          save_file="raster_values.nt.gz")
