@@ -9,16 +9,25 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 
-def map_mappings(row, mappings):
+def map_mappings(row: ..., mappings: ...) -> ...:
+    """_summary_
+
+    Args:
+        row (_type_): _description_
+        mappings (_type_): _description_
+
+    Returns:
+        ...: _description_
+    """
     key = tuple(row)
     return mappings[key]
 
 
-def change_mappings_lon_lat(raster_cells):
+def change_mappings_lon_lat(raster_cells: ...) -> ...:
     """
     Change raster_cells from UTM to lon, lat
     Args:
-        raster_cells: Np of unique raster_cells with
+        raster_cells: Np of unique raster_cells with  TODO: What?
 
     Returns: raster_cells as lon, lat in np array (x, 8)
 
@@ -42,7 +51,8 @@ def change_mappings_lon_lat(raster_cells):
 
 def create_polygon(bounds: list[tuple]) -> Polygon:
     """
-    Takes as input a list of coordinates that defines the convex hull of a polygon and creates that polygon as a Python object (shapely.Polygon).
+    Takes as input a list of coordinates that defines the corners of a polygon and creates that
+    polygon as a Python object (shapely.Polygon).
 
     Args:
         bounds (list[tuple]): A list of tuples defining the convex hull [(x1, y1), (x2, y2), ...].
@@ -59,7 +69,16 @@ def create_polygon(bounds: list[tuple]) -> Polygon:
     return polygon_geometry
 
 
-def majority_rule_on_tiles(S2_cells, poly):
+def majority_rule_on_tiles(S2_cells: ..., poly: ...) -> ...:
+    """_summary_
+
+    Args:
+        S2_cells (_type_): _description_
+        poly (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     if isinstance(S2_cells, type(np.NaN)):
         return np.NaN
     centroids = [tile.geometry.centroid for tile in S2_cells]  # Centroids, (lat, long)
@@ -70,7 +89,15 @@ def majority_rule_on_tiles(S2_cells, poly):
     return S2_cells
 
 
-def get_cell_polygons(raster_cells):
+def get_cell_polygons(raster_cells: ...) -> ...:
+    """_summary_
+
+    Args:
+        raster_cells (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     polygons = np.array(
         [create_polygon([(x[0], x[1]), (x[2], x[3]), (x[4], x[5]), (x[6], x[7])]) for x in raster_cells],
         dtype=object
@@ -79,14 +106,32 @@ def get_cell_polygons(raster_cells):
     return polygons
 
 
-def get_s2_cells_from_polygons(polygons, resolution):
+def get_s2_cells_from_polygons(polygons: ..., resolution: ...) -> ...:
+    """_summary_
+
+    Args:
+        polygons (_type_): _description_
+        resolution (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     grid = Babel('s2')
     s2_cells = np.array([grid.polyfill(x, resolution=resolution) for x in polygons], dtype=object)
 
     return s2_cells
 
 
-def update_s2_cells_majority_rule(s2_cells, polygons):
+def update_s2_cells_majority_rule(s2_cells: ..., polygons: ...) -> ...:
+    """_summary_
+
+    Args:
+        s2_cells (_type_): _description_
+        polygons (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     s2_cells = np.array([majority_rule_on_tiles(s2, poly)
                          for s2, poly in zip(s2_cells, polygons)],
                         dtype=object)
@@ -94,7 +139,15 @@ def update_s2_cells_majority_rule(s2_cells, polygons):
     return s2_cells
 
 
-def get_s2_tile_ids(s2_cells):
+def get_s2_tile_ids(s2_cells: ...) -> ...:
+    """_summary_
+
+    Args:
+        s2_cells (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     get_tiles = lambda x: tuple(item.tile_id for item in x)
 
     s2_cells = np.array([get_tiles(row) for row in s2_cells], dtype=object)
@@ -102,7 +155,14 @@ def get_s2_tile_ids(s2_cells):
     return s2_cells
 
 
-def save_mappings_parquet(save_buffer, raster_cells, s2_cells):
+def save_mappings_parquet(save_buffer: ..., raster_cells: ..., s2_cells: ...) -> None:
+    """_summary_
+
+    Args:
+        save_buffer (_type_): _description_
+        raster_cells (_type_): _description_
+        s2_cells (_type_): _description_
+    """
     mappings = pa.table({
         "ll_easting": raster_cells[:, 0],
         "ll_northing": raster_cells[:, 1],
@@ -118,7 +178,16 @@ def save_mappings_parquet(save_buffer, raster_cells, s2_cells):
     pq.write_table(mappings, save_buffer)
 
 
-def get_s2_from_raster_cells(raster_cells, resolution):
+def get_s2_from_raster_cells(raster_cells: ..., resolution: ...) -> ...:
+    """_summary_
+
+    Args:
+        raster_cells (_type_): _description_
+        resolution (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     raster_cells_lon_lat = change_mappings_lon_lat(raster_cells)
 
     polygons = get_cell_polygons(raster_cells_lon_lat)

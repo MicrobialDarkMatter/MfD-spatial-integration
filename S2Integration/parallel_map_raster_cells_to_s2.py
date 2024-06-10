@@ -10,7 +10,19 @@ from misc.LogFile import LogFile
 
 
 @timer
-def parallel_get_s2_from_raster_cells(raster_cells, resolution, num_chunks, num_processes):
+def parallel_get_s2_from_raster_cells(raster_cells: ..., resolution: int,
+                                      num_chunks: int, num_processes: int) -> ...:
+    """_summary_
+
+    Args:
+        raster_cells (_type_): _description_
+        resolution (_type_): _description_
+        num_chunks (_type_): _description_
+        num_processes (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     chunks_raster_cells = np.array_split(raster_cells, num_chunks)
 
     pool = Pool(processes=num_processes)
@@ -25,7 +37,17 @@ def parallel_get_s2_from_raster_cells(raster_cells, resolution, num_chunks, num_
     return s2
 
 
-def run_parallel_map_raster_cells_to_s2(resolution, log_path, parquet_file, batch_size, save_folder):
+def run_parallel_map_raster_cells_to_s2(resolution: int, log_path: str, parquet_file: str,
+                                        batch_size: int, save_folder: str) -> None:
+    """_summary_
+
+    Args:
+        resolution (int): _description_
+        log_path (str): _description_
+        parquet_file (str): _description_
+        batch_size (int): _description_
+        save_folder (str): _description_
+    """
     log = LogFile(log_file=log_path)
 
     file = pq.ParquetFile(parquet_file)

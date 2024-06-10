@@ -18,3 +18,5 @@ SCHEMA = Namespace("http://schema.org/")
 PROV = Namespace("http://www.w3.org/ns/prov#")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 EMPO = Namespace("http://earthmicrobiome.org/protocols-and-standards/empo/")  # TODO: Verify
+
+NATURA2000 = Namespace("http://biodiversity.europa.eu/habitats/")

@@ -8,7 +8,12 @@ import gzip
 from variables import *
 
 
-def create_tbox(save_file):
+def create_tbox(save_file: str) -> None:
+    """_summary_
+
+    Args:
+        save_file (str): _description_
+    """
     with gzip.open(filename=save_file, mode="at", encoding="utf-8") as triple_file:
         G = Graph()
 
