@@ -8,7 +8,14 @@ from multiprocessing import Pool, cpu_count
 from S2Integration.misc.misc_timer import timer
 
 
-def raster_values_to_rdf(parquet_folder, save_path, file):
+def raster_values_to_rdf(parquet_folder: str, save_path: str, file: str) -> None:
+    """_summary_
+
+    Args:
+        parquet_folder (str): _description_
+        save_path (str): _description_
+        file (str): _description_
+    """
     save_file = os.path.join(save_path, file.split(".")[0] + ".nt.gz")
 
     df = pq.read_table(os.path.join(parquet_folder, file)).to_pandas()
@@ -52,7 +59,14 @@ def raster_values_to_rdf(parquet_folder, save_path, file):
         triple_file.write(G.serialize(format='nt'))
 
 
-def raster_mappings_to_rdf(parquet_folder, save_path, file):
+def raster_mappings_to_rdf(parquet_folder: str, save_path: str, file: str) -> None:
+    """_summary_
+
+    Args:
+        parquet_folder (str): _description_
+        save_path (str): _description_
+        file (str): _description_
+    """
     save_file = os.path.join(save_path, file.split(".")[0] + ".nt.gz")
 
     G = Graph()  # Initialize an empty graph
@@ -74,7 +88,14 @@ def raster_mappings_to_rdf(parquet_folder, save_path, file):
 
 
 @timer
-def raster_to_rdf_parallel(function, parquet_folder, save_path):
+def raster_to_rdf_parallel(function: ..., parquet_folder: str, save_path: str) -> None:
+    """_summary_
+
+    Args:
+        function (_type_): _description_
+        parquet_folder (str): _description_
+        save_path (str): _description_
+    """
     files = [file for file in os.listdir(parquet_folder) if file.endswith('.parquet')]
 
     # Create a pool of workers

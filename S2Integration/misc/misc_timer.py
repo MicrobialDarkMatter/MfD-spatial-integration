@@ -1,6 +1,6 @@
 import time
 
-
+# TODO: Not understood
 def timer(func):
     def wrapper(*args, **kwargs):
         start_time = time.time()

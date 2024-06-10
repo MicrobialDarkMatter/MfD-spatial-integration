@@ -21,20 +21,36 @@ def not_nan(value):
     return value == value
 
 
-def row_graphs_to_graph(dataframe, function):
-    """Convert a dataframe to a graph using a function."""
+def rows_to_graph(dataframe: pd.DataFrame, function: function) -> Graph:
+    """Converts each row of a dataframe to a graph based on a method function.
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        function (function): _description_
+
+    Returns:
+        Graph: _description_
+    """
     G = Graph()
     for i in range(dataframe.shape[0]):
         G += function(dataframe.iloc[i])
     return G
 
 
-def save_graph(save_buffer, graph):
+def save_graph(save_buffer: str, graph: Graph) -> None:
     with gzip.open(filename=save_buffer, mode="at", encoding="utf-8") as triple_file:
         triple_file.write(graph.serialize(format="nt"))
 
 
-def extract_people_info(input_string):
+def extract_people_info(input_string: str) -> tuple:
+    """Takes as input a string containing multiple people's names and email addresses and returns a tuple containing the first names, last name, and email address.
+
+    Args:
+        input_string (str): _description_
+
+    Returns:
+        tuple: _description_
+    """
     # Regular expression to match the pattern
     pattern = r'^([^<]+) <([^>]+)>$'
 
@@ -52,17 +68,26 @@ def extract_people_info(input_string):
         return None, None, None
 
 
-def get_s2_cell_hex_from_sample(lat, lon):
+def get_s2_cell_bit_from_sample(lat: float, lon: float) -> str:
     """Get the S2 cell ID from a sample."""
     grid = Babel("S2")
     s2_id = grid.geo_to_tile(lat=lat, lon=lon, resolution=RESOLUTION).tile_id
-    return convert_s2_id_to_bit_id(s2_id)
+    s2_bit_id = convert_s2_id_to_bit_id(s2_id)
+    return s2_bit_id
 
 
-def get_id_mappings(mfdo):
+def get_id_mappings(mfdo: pd.DataFrame) -> dict:
+    """Generates new IDs for the habitat hierarchy as the original IDs are not unique.
+
+    Args:
+        mfdo (pd.DataFrame): _description_
+
+    Returns:
+        dict: _description_
+    """
     hierarchy = {}
 
-    for idx, row in mfdo.iterrows():  # Loop through each row in the habitat dataframe
+    for _, row in mfdo.iterrows():  # Loop through each row in the habitat dataframe
         parent = row["mfd_hab1"]
         child = row["mfd_hab2"]
         root = row["mfd_hab3"]
@@ -98,8 +123,15 @@ def get_id_mappings(mfdo):
     return id_mappings
 
 
-def seq_row_to_graph(row):
-    """Convert a row of the sequencing metadata to a graph."""
+def seq_row_to_graph(row: pd.Series) -> Graph:
+    """Convert a row of the sequencing metadata to a graph.
+
+    Args:
+        row (pd.Series): _description_
+
+    Returns:
+        Graph: _description_
+    """
     G = Graph()
 
     # Check NaN in sequence ID
@@ -197,7 +229,16 @@ def seq_row_to_graph(row):
     return G
 
 
-def field_row_to_graph(row, id_mappings=None):
+def field_row_to_graph(row: pd.Series, id_mappings: dict=None) -> ...:
+    """Convert a row of the fieldsample metadata to a graph.
+
+    Args:
+        row (_type_): _description_
+        id_mappings (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
     G = Graph()
 
     # sample type
@@ -234,8 +275,27 @@ def field_row_to_graph(row, id_mappings=None):
         G.add(triple=(row["site_bnode"],
                       URIRef(RDF.type),
                       URIRef(MFD + "Site")))
+        
+        # Add the two least detailed parts of the habitat hierarchy
+        if not_nan(row["mfd_sampletype"]):
+            G.add(triple=(row["site_bnode"],
+                            URIRef(MFD + "hasSampleType"),
+                            URIRef(MFD + row["mfd_sampletype"])))
+            # type
+            G.add(triple=(URIRef(MFD + row["mfd_sampletype"]),
+                            URIRef(RDF.type),
+                            URIRef(MFD + "SampleType")))
+        
+        if not_nan(row["mfd_areatype"]):
+            G.add(triple=(row["site_bnode"],
+                            URIRef(MFD + "hasAreaType"),
+                            URIRef(MFD + row["mfd_areatype"])))
+            # type
+            G.add(triple=(URIRef(MFD + row["mfd_areatype"]),
+                            URIRef(RDF.type),
+                            URIRef(MFD + "AreaType")))
 
-        # Add habitat
+        # Add habitat - adds only the most detailed habitat code available
         if id_mappings:
             if not_nan(row["mfd_hab3"]):
                 G.add(triple=(row["site_bnode"],
@@ -266,7 +326,7 @@ def field_row_to_graph(row, id_mappings=None):
 
         # map to S2 cell
         if not_nan(row["latitude"]) and not_nan(row["longitude"]):
-            s2_cell = get_s2_cell_hex_from_sample(lat=row["latitude"], lon=row["longitude"])
+            s2_cell = get_s2_cell_bit_from_sample(lat=row["latitude"], lon=row["longitude"])
             # site to S2 cell
             G.add(triple=(row["site_bnode"],
                           URIRef(GEO + "ehCoveredBy"),
@@ -305,7 +365,15 @@ def field_row_to_graph(row, id_mappings=None):
     return G
 
 
-def project_row_to_graph(row):
+def project_row_to_graph(row: pd.Series) -> Graph:
+    """Convert a row of the project metadata to a graph.
+
+    Args:
+        row (pd.Series): _description_
+
+    Returns:
+        Graph: _description_
+    """
     G = Graph()
 
     if not_nan(row["description"]):
@@ -402,7 +470,17 @@ def project_row_to_graph(row):
     return G
 
 
-def iterative_add_habitat(row, id_mappings, habitat_level):
+def iterative_add_habitat(row: pd.Series, id_mappings: dict, habitat_level: int) -> Graph:
+    """Add links to external habitat concepts.
+
+    Args:
+        row (pd.Series): _description_
+        id_mappings (dict): _description_
+        habitat_level (int): _description_
+
+    Returns:
+        Graph: _description_
+    """
     G = Graph()
 
     for i in reversed(range(1, habitat_level + 1)):
@@ -421,7 +499,7 @@ def iterative_add_habitat(row, id_mappings, habitat_level):
             if not_nan(row["Natura2000"]) and habitat_level == i:
                 G.add(triple=(URIRef(MFD + habitat_id),
                               URIRef(MFD + "hasNatura2000Concept"),
-                              URIRef(MFD + row["Natura2000"])))
+                              URIRef(NATURA2000 + row["Natura2000"])))
 
                 G.add(triple=(URIRef(MFD + row["Natura2000"]),
                               URIRef(RDF.type),
@@ -453,30 +531,20 @@ def iterative_add_habitat(row, id_mappings, habitat_level):
                 G.add(triple=(URIRef(MFD + habitat_id),
                               URIRef(SKOS + "broadMatch"),
                               URIRef(MFD + id_mappings[row[f"mfd_hab{i - 1}"]])))
-                #
-            else:
-                G.add(triple=(URIRef(MFD + habitat_id),
-                              URIRef(MFD + "hasAreaType"),
-                              URIRef(MFD + row["mfd_areatype"])))
-
-                # type
-                G.add(triple=(URIRef(MFD + row["mfd_areatype"]),
-                                URIRef(RDF.type),
-                                URIRef(MFD + "AreaType")))
-
-                G.add(triple=(URIRef(MFD + habitat_id),
-                              URIRef(MFD + "hasSampleType"),
-                              URIRef(MFD + row["mfd_sampletype"])))
-
-                # type
-                G.add(triple=(URIRef(MFD + row["mfd_sampletype"]),
-                                URIRef(RDF.type),
-                                URIRef(MFD + "SampleType")))
 
     return G
 
 
-def ontology_row_to_graph(row, id_mappings):
+def ontology_row_to_graph(row: pd.Series, id_mappings: dict) -> Graph:
+    """Convert a row of the MfD ontology to a graph. Only adds the most detailed habitat code available.
+
+    Args:
+        row (_type_): _description_
+        id_mappings (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     G = Graph()  # Initialize an empty graph
 
     if not_nan(row["mfd_hab3"]):
@@ -494,20 +562,23 @@ def ontology_row_to_graph(row, id_mappings):
     return G
 
 
-def row_otu_to_rdf(row):
+def row_otu_to_rdf(row: pd.Series) -> Graph:
+    """_summary_
+
+    Args:
+        row (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     G = Graph()
 
-    # print(row)
-    # print(" ROW INDEX ")
-    # print(list(row.index))
-    # print(" ROW INDEX SLICE ")
-    # print((row.index[1:-7]))
-
     # OTU and samples
-    for sample in row.index[1:-7]:
+    for sample in row.index[1:-7]:  # Only looks at the OTU counts
         if row[sample] == 0:  # Don't add OTUs of no abundance
             continue
 
+        # TODO: Update based on answers from the MfD team
         measurement_bnode = BNode()
         G.add(triple=(URIRef(MFD + sample),
                       URIRef(OBOE + "hasMeasurement"),
@@ -529,7 +600,7 @@ def row_otu_to_rdf(row):
     previous_taxon = None
     for taxon in reversed(row.index[-7:]):
         if row[taxon] == row[taxon]:
-            if not previous_taxon:
+            if not previous_taxon:  # We only add the most detailed part of the taxonomy.
                 G.add(triple=(URIRef(MFD + row["OTU"]),
                               URIRef(MFD + "hasTaxonMapping"),  # TODO: Likely to change
                               URIRef(MFD + row[taxon])))
@@ -547,7 +618,13 @@ def row_otu_to_rdf(row):
     return G
 
 
-def save_otu_graph(otu, save_buffer):
+def save_otu_graph(otu: pd.DataFrame, save_buffer: str) -> None:
+    """_summary_
+
+    Args:
+        otu (_type_): _description_
+        save_buffer (str): _description_
+    """
     log = LogFile(log_file="otu.txt")
     with gzip.open(filename=save_buffer, mode="at", encoding="utf-8") as triple_file:
         for i in range(otu.shape[0]):
@@ -577,13 +654,11 @@ if __name__ == "__main__":
     # Sequence data
     seq_metadata_dir = "https://raw.githubusercontent.com/cmc-aau/mfd_metadata/main/data/metadata/general/latest_corrected_combined_metadata.csv"
     seq_metadata = pd.read_csv(seq_metadata_dir)
-    # seq_metadata = seq_metadata[seq_metadata["fieldsample_barcode"].isin(field_metadata["fieldsample_barcode"])]
     
     # Project data
     projects_dir = "https://github.com/cmc-aau/mfd_metadata/raw/main/analysis/releases/latest_mfd_projects.xlsx"
     projects_file = requests.get(projects_dir)
     projects = pd.read_excel(BytesIO(projects_file.content))
-    # projects = projects[projects["project_id"].isin(field_metadata["project_id"])]
 
     # Habitat
     from functools import partial
@@ -591,16 +666,19 @@ if __name__ == "__main__":
     mfdo_dir = "https://github.com/cmc-aau/mfd_metadata/raw/main/data/ontology/latest_mfd-habitat-ontology.xlsx"
     mfdo_file = requests.get(mfdo_dir)
     mfdo = pd.read_excel(BytesIO(mfdo_file.content),
-                         dtype={'mfd_sampletype': str, 'mfd_areatype': str, 'mfd_hab1_code': str, 'mfd_hab1': str,
-                                'mfd_hab2_code': str, 'mfd_hab2': str, 'mfd_hab3_code': str, 'mfd_hab3': str,
-                                'Natura2000': str, 'EUNIS': str, 'EMPO': str})
+                         dtype={'mfd_sampletype': str, 'mfd_areatype': str, 'mfd_hab1_code': str,
+                                'mfd_hab1': str, 'mfd_hab2_code': str, 'mfd_hab2': str,
+                                'mfd_hab3_code': str, 'mfd_hab3': str, 'Natura2000': str,
+                                'EUNIS': str, 'EMPO': str})
 
     id_mappings = get_id_mappings(mfdo)
 
     ontology_row_to_graph = partial(ontology_row_to_graph, id_mappings=id_mappings)
 
     # Update the field metadata with habitat information
-    field_metadata.merge(mfdo, on=["mfd_sampletype", "mfd_areatype", "mfd_hab1", "mfd_hab2", "mfd_hab3"], how="left")
+    field_metadata.merge(mfdo,
+                         on=["mfd_sampletype", "mfd_areatype", "mfd_hab1", "mfd_hab2", "mfd_hab3"],
+                         how="left")
     field_row_to_graph = partial(field_row_to_graph, id_mappings=id_mappings)
 
 
@@ -608,21 +686,19 @@ if __name__ == "__main__":
 
     # # # # Convert the data to RDF # # # #
     save_graph(save_buffer="fieldsamples.nt.gz",
-               graph=row_graphs_to_graph(field_metadata, field_row_to_graph))
+               graph=rows_to_graph(field_metadata, field_row_to_graph))
     
     save_graph(save_buffer="sequencing.nt.gz",
-               graph=row_graphs_to_graph(seq_metadata, seq_row_to_graph))
+               graph=rows_to_graph(seq_metadata, seq_row_to_graph))
     
     save_graph(save_buffer="projects.nt.gz",
-               graph=row_graphs_to_graph(projects, project_row_to_graph))
+               graph=rows_to_graph(projects, project_row_to_graph))
 
     save_graph(save_buffer="habitat.nt.gz",
-               graph=row_graphs_to_graph(mfdo, ontology_row_to_graph))
+               graph=rows_to_graph(mfdo, ontology_row_to_graph))
 
-    # # OTU data
-    # otu_path = "/projects/microflora_danica/sub_projects/phylotables/analysis/release/2024-03-07_arcbac_MFD_samples_phylotabel_release.csv"
-    # otu_df = pd.read_csv(otu_path)
-    # save_otu_graph(otu=otu_df, save_buffer="otu.nt.gz")
-    # fieldsamples = field_metadata["fieldsample_barcode"].unique()
-    # cols_to_drop = [col for col in otu_df.columns if col not in fieldsamples and "MFD" in col]
-    # otu_df = otu_df.drop(columns=cols_to_drop)
+    # OTU data
+    otu_path = "/projects/microflora_danica/sub_projects/phylotables/analysis/release/2024-03-07_arcbac_MFD_samples_phylotabel_release.csv"
+    otu_df = pd.read_csv(otu_path)
+    save_otu_graph(otu=otu_df, save_buffer="otu.nt.gz")
+

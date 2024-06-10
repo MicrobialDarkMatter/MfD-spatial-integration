@@ -7,8 +7,24 @@ from parallel_map_raster_cells_to_s2 import parallel_get_s2_from_raster_cells, c
 from misc.unique_raster_cells import get_unique_raster_cells
 
 
-def main(raster_file_paths, raster_cell_folder, mappings_file_path, S2_level, points_path, lat_col, lon_col, grid, points_mappings_path, points_errors_path):
-    # # # # Get MfD Mappings # # # #
+def main(raster_file_paths: str, raster_cell_folder: str, mappings_file_path: str,
+         S2_level: int, points_path: str, lat_col: ..., lon_col: ..., grid: ...,
+         points_mappings_path: str, points_errors_path: str) -> None:
+    """_summary_
+
+    Args:
+        raster_file_paths (_type_): _description_
+        raster_cell_folder (_type_): _description_
+        mappings_file_path (_type_): _description_
+        S2_level (_type_): _description_
+        points_path (_type_): _description_
+        lat_col (_type_): _description_
+        lon_col (_type_): _description_
+        grid (_type_): _description_
+        points_mappings_path (_type_): _description_
+        points_errors_path (_type_): _description_
+    """
+    # # # # Get MfD Mappings TODO: What mappings? The below function finds lat/lon # # # #
     points = get_coordinates_columns(points=pd.read_excel(points_path),
                                      lat_col=lat_col,
                                      lon_col=lon_col)
@@ -22,7 +38,7 @@ def main(raster_file_paths, raster_cell_folder, mappings_file_path, S2_level, po
     save_point_mappings(mapped_points, points_mappings_path)
     save_point_mappings(mapping_errors, points_errors_path)
 
-    # # # # Retrieve Raster Corners # # # #
+    # # # # Retrieve Raster Corners TODO: What is a raster corner? # # # #
     for file_path in raster_file_paths:
         raster_cells = get_raster_cells(raster_path=file_path)
 
@@ -30,7 +46,7 @@ def main(raster_file_paths, raster_cell_folder, mappings_file_path, S2_level, po
                                   save_folder=raster_cell_folder,
                                   raster_path=file_path)
 
-    # # # Map Corners to S2 # # # #
+    # # # Map Corners to S2 TODO: What? # # # #
     raster_cells = get_unique_raster_cells(raster_cell_folder)
 
     s2_cells = parallel_get_s2_from_raster_cells(raster_cells, resolution=S2_level, num_chunks=cpu_count() * 10,

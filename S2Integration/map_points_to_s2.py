@@ -3,10 +3,12 @@ from babelgrid import Babel
 
 
 def get_coordinates_columns(points: pd.DataFrame, lat_col: str, lon_col: str) -> pd.DataFrame:
-    """this function takes as input a dataframe of points and returns a dataframe with the latitude and longitude columns
+    """this function takes as input a dataframe of points and returns a dataframe with the
+    latitude and longitude columns
 
     Args:
-        points (pd.DataFrame): the input dataframe of points, possibly containing empty cells for the latitude and longitude
+        points (pd.DataFrame): the input dataframe of points, possibly containing empty cells
+        for the latitude and longitude
 
     Returns:
         pd.DataFrame: the input dataframe with only the latitude and longitude columns
@@ -19,10 +21,12 @@ def get_coordinates_columns(points: pd.DataFrame, lat_col: str, lon_col: str) ->
 
 
 def points_to_s2(points: pd.DataFrame, grid: Babel, grid_resolution: int) -> pd.DataFrame:
-    """this function takes as input a dataframe of points and returns a dataframe with the S2 cell id for each point, determined using the apply method
+    """this function takes as input a dataframe of points and returns a dataframe with the
+    S2 cell id for each point, determined using the apply method
 
     Args:
-        points (pd.DataFrame): the input dataframe of points, possibly containing empty cells for the latitude and longitude
+        points (pd.DataFrame): the input dataframe of points, possibly containing empty cells
+        for the latitude and longitude
         grid_resolution (int): the desired resolution of the S2 grid
 
     Returns:
@@ -43,9 +47,10 @@ def points_to_s2(points: pd.DataFrame, grid: Babel, grid_resolution: int) -> pd.
 
 def save_point_mappings(points: pd.DataFrame, save_path: str) -> None:
     """this function takes as input a dataframe of points and saves it to a parquet file
-
+    TODO: Points? As in the MfD sample sites?
     Args:
-        points (pd.DataFrame): the input dataframe of points, possibly containing empty cells for the latitude and longitude
+        points (pd.DataFrame): the input dataframe of points, possibly containing empty cells
+        for the latitude and longitude
         save_path (str): the path to the parquet file
     """
     

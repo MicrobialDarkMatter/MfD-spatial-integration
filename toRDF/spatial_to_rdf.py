@@ -16,7 +16,7 @@ from TBox import create_tbox
 
 remove_suffix_numbering = lambda x: re.sub(r'[_\d]+$', "", x)
 
-def convert_s2_id_to_bit_id(s2_hex):
+def convert_s2_id_to_bit_id(s2_hex: str) -> str:
     """
     Converts a given S2 ID from hexadecimal format to binary format.
 
@@ -34,7 +34,7 @@ def convert_s2_id_to_bit_id(s2_hex):
     return bit_id
 
 
-def get_raster_cell_id(r):
+def get_raster_cell_id(r: tuple) -> str:
     """
     Returns the raster cell ID for a given row in a raster. A raster cell ID is the combination of the cell's four corners (4 corners x 2 dimensions = 8 entries)
     i.e., ll_easting, ll_northing, ul_easting, ul_northing, ur_easting, ur_northing, lr_easting, lr_northing
@@ -48,7 +48,7 @@ def get_raster_cell_id(r):
     return f"{int(r[0])}_{int(r[1])}_{int(r[2])}_{int(r[3])}_{int(r[4])}_{int(r[5])}_{int(r[6])}_{int(r[7])}"
 
 
-def get_literal(literal):
+def get_literal(literal: str | int | float | bool) -> tuple[str, str]:
     """
     Returns a tuple containing the literal value and its corresponding XSD data type.
 
@@ -73,10 +73,14 @@ def get_literal(literal):
     return literal, object_type
 
 
-def raster_values_to_rdf(parquet_folder, save_file):
+def raster_values_to_rdf(parquet_folder: str, save_file: str) -> None:
+    """Converts the raster files, raster cells and raster cell values to RDF format.
+
+    Args:
+        parquet_folder (_type_): _description_
+        save_file (_type_): _description_
     """
-    Converts the raster values to RDF format.
-    """
+
     # Open the file to write the triples
     with gzip.open(filename=save_file, mode="at", encoding="utf-8") as triple_file:
         # Iterate over the parquet files in the folder
@@ -128,7 +132,7 @@ def raster_values_to_rdf(parquet_folder, save_file):
                 # Measurement ContainsMeasurementsOfType MeasurementType
                 G.add(triple=(measurement,
                               URIRef(OBOE + "containsMeasurementsOfType"),
-                              URIRef(MFD + file_observation)))
+                              URIRef(MFD + file_observation)))  # TODO: Consider linking to an external ontology.
 
                 # MeasurementType Type MeasurementType
                 G.add(triple=(URIRef(MFD + file_observation),
@@ -138,10 +142,14 @@ def raster_values_to_rdf(parquet_folder, save_file):
             triple_file.write(G.serialize(format='nt'))
 
 
-def raster_mappings_to_rdf(parquet_datasets_path_or_folder, save_file):
+def raster_mappings_to_rdf(parquet_datasets_path_or_folder: str, save_file: str) -> None:
+    """Converts the raster-S2 mappings to RDF format.
+
+    Args:
+        parquet_datasets_path_or_folder (str): _description_
+        save_file (str): _description_
     """
-    Converts the raster mappings to RDF format.
-    """
+
     with gzip.open(filename=save_file, mode="at", encoding="utf-8") as triple_file:
         df = pq.ParquetDataset(parquet_datasets_path_or_folder).read().to_pandas()
         for r in df.iterrows():
@@ -151,11 +159,10 @@ def raster_mappings_to_rdf(parquet_datasets_path_or_folder, save_file):
             raster_cell = get_raster_cell_id(list(r[1]))
 
             for s2_cell in s2_cells:
-                # TODO: Add to TBOX
-                # # S2Cell Type KWG:S2Cell
-                # G.add(triple=(URIRef(KWG_ONT + s2_cell),
-                #               URIRef(RDF.type),
-                #               URIRef(KWG_ONT + "S2Cell")))
+                # S2Cell Type KWG:S2Cell
+                G.add(triple=(URIRef(KWG_ONT + s2_cell),
+                              URIRef(RDF.type),
+                              URIRef(KWG_ONT + "S2Cell")))
 
                 # RasterCell Covers S2Cell
                 G.add(triple=(URIRef(MFD + raster_cell),

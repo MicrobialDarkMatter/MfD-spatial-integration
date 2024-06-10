@@ -3,20 +3,24 @@ import pyarrow.parquet as pq
 import os
 
 
-def read_parquet(path, with_data=False):
+def read_parquet(path: str, with_data=False) -> np.array:
     if with_data:
-        table = pq.read_table(path, columns=["ll_easting", "ll_northing", "ul_easting", "ul_northing", "ur_easting", "ur_northing", "lr_easting", "lr_northing", "data"])
+        table = pq.read_table(path, columns=["ll_easting", "ll_northing", "ul_easting", "ul_northing",
+                                             "ur_easting", "ur_northing", "lr_easting", "lr_northing",
+                                             "data"])
     else:
-        table = pq.read_table(path, columns=["ll_easting", "ll_northing", "ul_easting", "ul_northing", "ur_easting", "ur_northing", "lr_easting", "lr_northing"])
+        table = pq.read_table(path, columns=["ll_easting", "ll_northing", "ul_easting", "ul_northing",
+                                             "ur_easting", "ur_northing", "lr_easting", "lr_northing"])
 
     return np.asarray(table)
 
 
-def get_unique_raster_cells(raster_cell_folder):
+def get_unique_raster_cells(raster_cell_folder: str) -> np.array:
     """
+    Get all unique raster_cells from a folder of parquet raster_cells.
 
     Args:
-        raster_cell_folder: Folder to parquet raster_cells
+        raster_cell_folder (str): Folder to parquet raster_cells
 
     Returns: All unique raster_cells
 
