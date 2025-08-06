@@ -2,3 +2,4 @@ SPARQL/Queries/queryGraph.py
 .idea/
 */__pycache__/*
 S2Integration/misc/__pycache__/*
+.pyc

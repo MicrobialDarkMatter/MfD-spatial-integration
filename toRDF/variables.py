@@ -1,11 +1,7 @@
-
 ### NAMESPACES ###
 from rdflib import Namespace
 from rdflib.namespace import RDF, XSD, RDFS
 
-RDF = RDF
-XSD = XSD
-RDFS = RDFS
 
 MFD = Namespace("http://purl.archive.org/domain/mfd#")  # TODO: Create IRI
 OBOE = Namespace("http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#")
